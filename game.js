@@ -1,4 +1,5 @@
-// Set up canvas
+
+// Setting up canvas
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -9,12 +10,18 @@ canvas.height = gridSize * cellSize;
 
 // Game board (2D array filled with 0s)
 let board = Array(gridSize).fill(null).map(() => Array(gridSize).fill(0));
+let score = 0;
 
-// Block shapes (You can add more!)
+// Block shapes
 const blockShapes = [
-    [[1, 1], [1, 1]],  // Square
-    [[1, 1, 1]],        // Line
-    [[1, 1], [0, 1], [0, 1]]  // L-shape
+    [[1, 1], [1, 1]],       // Square
+    [[1, 1, 1, 1]],         // Line (horizontal)
+    [[1], [1], [1], [1]],   // Line (vertical)
+    [[1, 1, 0], [0, 1, 1]], // Z-shape
+    [[0, 1, 1], [1, 1, 0]], // Reverse Z-shape
+    [[1, 1, 1], [0, 1, 0]], // T-shape
+    [[1, 1], [1, 0]],       // L-shape
+    [[1, 1], [0, 1]]        // Reverse L-shape
 ];
 
 let currentBlock = getRandomBlock(); // Holds the currently dragged block
@@ -23,6 +30,22 @@ let blockPos = { x: 3, y: 0 }; // Position of the block
 // Generate a random block
 function getRandomBlock() {
     return blockShapes[Math.floor(Math.random() * blockShapes.length)];
+}
+function checkFullRows() {
+    let rowsCleared = 0;
+
+    for (let row = 0; row < gridSize; row++) {
+        if (board[row].every(cell => cell === 1)) {
+            board.splice(row, 1);
+            board.unshift(Array(gridSize).fill(0)); // Add empty row on top
+            rowsCleared++;
+        }
+    }
+
+    if (rowsCleared > 0) {
+        score += rowsCleared * 100; // Each row = 100 points
+        updateScoreDisplay();
+    }
 }
 
 // Draw the game board
@@ -39,6 +62,25 @@ function drawBoard() {
         }
     }
 }
+function updateScoreDisplay() {
+    document.getElementById("score").innerText = score;
+}
+function checkGameOver() {
+    for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+            for (let shape of blockShapes) {
+                if (canPlaceBlock(shape, col, row)) {
+                    return false; // At least one block can fit
+                }
+            }
+        }
+    }
+
+    alert("Game Over! Final Score: " + score);
+    location.reload(); // Restart the game
+    return true;
+}
+
 
 // Draw the current block
 function drawBlock(block, x, y) {
